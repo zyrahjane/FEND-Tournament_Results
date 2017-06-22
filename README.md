@@ -11,17 +11,27 @@ tournament_test.py - this is a client program which will use your functions writ
 In correct directory run the following:
 
 $vagrant ssh
+
+
 $psql
 
 ---to create a database
+
+
 vagrant=> create database tournament;
 
 ---to inialise schemas
+
+
 tournament=> \i tournament.sql
 
 ---to quit psql
+
+
 \q
 
 ---to run test
+
+
 python tournament_test.py
 
