@@ -20,6 +20,12 @@ $psql
 
 vagrant=> create database tournament;
 
+---connect to database
+
+
+\c tournament
+
+
 ---to inialise schemas
 
 
