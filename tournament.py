@@ -7,15 +7,25 @@ import psycopg2
 import bleach
 
 
-def connect():
+def connect(database_name):
     """Connect to the PostgreSQL database.  Returns a database connection."""
-    return psycopg2.connect("dbname=tournament")
+    try:
+        db = psycopg2.connect("dbname={}".format(database_name))
+        c = db.cursor()
+        return db, c
+    except psycopg2.Error as e:
+        print "Unable to connect to database"
+        # THEN perhaps exit the program
+        sys.exit(1) # The easier method
+        # OR perhaps throw an error
+        raise e
+        # If you choose to raise an exception,
+        # It will need to be caught by the whoever called this function
 
 
 def deleteMatches():
     """Remove all the match records from the database."""
-    DB = connect()
-    c = DB.cursor()
+    DB, c = connect("tournament")
     c.execute("TRUNCATE matches")
     DB.commit()
     DB.close()
@@ -23,17 +33,15 @@ def deleteMatches():
 
 def deletePlayers():
     """Remove all the player records from the database."""
-    DB = connect()
-    c = DB.cursor()
-    c.execute("TRUNCATE players")
+    DB, c = connect("tournament")
+    c.execute("TRUNCATE matches, players")
     DB.commit()
     DB.close()
 
 
 def countPlayers():
     """Returns the number of players currently registered."""
-    DB = connect()
-    c = DB.cursor()
+    DB, c = connect("tournament")
     c.execute("SELECT count(*) from players")
     count = int(c.fetchone()[0])
     DB.close()
@@ -49,8 +57,7 @@ def registerPlayer(name):
     Args:
       name: the player's full name (need not be unique).
     """
-    DB = connect()
-    c = DB.cursor()
+    DB, c = connect("tournament")
     c.execute("INSERT INTO players (name) VALUES (%s)", (bleach.clean(name),))
     DB.commit()
     DB.close()
@@ -70,8 +77,7 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
-    DB = connect()
-    c = DB.cursor()
+    DB, c = connect("tournament")
     c.execute(
         '''select a.id, a.name, wins, losses+wins as num_matches from
         (select name, id, count(loser) as losses from players left join
@@ -98,8 +104,7 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
-    DB = connect()
-    c = DB.cursor()
+    DB, c = connect("tournament")
     c.execute("INSERT INTO matches (winner, loser) VALUES (%s, %s)",
               (bleach.clean(winner), bleach.clean(loser),))
     DB.commit()
@@ -121,8 +126,7 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
-    DB = connect()
-    c = DB.cursor()
+    DB, c = connect("tournament")
     c.execute(
         '''select id, name, count(winner) as wins from players
         left join matches on players.id = matches.winner group by name, id
