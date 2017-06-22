@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-# 
+#
 # tournament.py -- implementation of a Swiss-system tournament
 #
 
 import psycopg2
+import bleach
 
 
 def connect():
@@ -13,31 +14,53 @@ def connect():
 
 def deleteMatches():
     """Remove all the match records from the database."""
+    DB = connect()
+    c = DB.cursor()
+    c.execute("TRUNCATE matches")
+    DB.commit()
+    DB.close()
 
 
 def deletePlayers():
     """Remove all the player records from the database."""
+    DB = connect()
+    c = DB.cursor()
+    c.execute("TRUNCATE players")
+    DB.commit()
+    DB.close()
 
 
 def countPlayers():
     """Returns the number of players currently registered."""
+    DB = connect()
+    c = DB.cursor()
+    c.execute("SELECT count(*) from players")
+    count = int(c.fetchone()[0])
+    DB.close()
+    return count
 
 
 def registerPlayer(name):
     """Adds a player to the tournament database.
-  
+
     The database assigns a unique serial id number for the player.  (This
     should be handled by your SQL database schema, not in your Python code.)
-  
+
     Args:
       name: the player's full name (need not be unique).
     """
+    DB = connect()
+    c = DB.cursor()
+    c.execute("INSERT INTO players (name) VALUES (%s)", (bleach.clean(name),))
+    DB.commit()
+    DB.close()
 
 
 def playerStandings():
     """Returns a list of the players and their win records, sorted by wins.
 
-    The first entry in the list should be the player in first place, or a player
+    The first entry in the list should be the player in first place,
+    or a player
     tied for first place if there is currently a tie.
 
     Returns:
@@ -47,6 +70,25 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
+    DB = connect()
+    c = DB.cursor()
+    c.execute(
+        '''select a.id, a.name, wins, losses+wins as num_matches from
+        (select name, id, count(loser) as losses from players left join
+        matches on players.id = matches.loser group by name, id) a inner join
+        (select name, id, count(winner) as wins from players
+        left join matches on players.id = matches.winner group by name, id) b
+        on a.id=b.id order by wins desc;
+        '''
+    )
+    standings = c.fetchall()
+    DB.close()
+    ids, names, wins, num_matches = zip(*standings)
+    ids = map(int, ids)
+    names = map(str, names)
+    wins = map(int, wins)
+    num_matches = map(int, num_matches)
+    return zip(ids, names, wins, num_matches)
 
 
 def reportMatch(winner, loser):
@@ -56,16 +98,22 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
- 
- 
+    DB = connect()
+    c = DB.cursor()
+    c.execute("INSERT INTO matches (winner, loser) VALUES (%s, %s)",
+              (bleach.clean(winner), bleach.clean(loser),))
+    DB.commit()
+    DB.close()
+
+
 def swissPairings():
     """Returns a list of pairs of players for the next round of a match.
-  
+
     Assuming that there are an even number of players registered, each player
     appears exactly once in the pairings.  Each player is paired with another
     player with an equal or nearly-equal win record, that is, a player adjacent
     to him or her in the standings.
-  
+
     Returns:
       A list of tuples, each of which contains (id1, name1, id2, name2)
         id1: the first player's unique id
@@ -73,5 +121,17 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
-
-
+    DB = connect()
+    c = DB.cursor()
+    c.execute(
+        '''select id, name, count(winner) as wins from players
+        left join matches on players.id = matches.winner group by name, id
+        order by wins desc;
+        '''
+    )
+    standings = c.fetchall()
+    DB.close()
+    ids, names, wins = zip(*standings)
+    ids = map(int, ids)
+    names = map(str, names)
+    return zip(ids[::2], names[::2], ids[1::2], names[1::2])

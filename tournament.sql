@@ -6,4 +6,12 @@
 -- You can write comments in this file by starting them with two dashes, like
 -- these lines here.
 
+DROP TABLE IF EXISTS players;
 
+CREATE TABLE players ( name TEXT,
+                     id SERIAL);
+
+DROP TABLE IF EXISTS matches;
+
+CREATE TABLE matches (winner INT,
+                     loser INT);
