@@ -16,4 +16,6 @@ CREATE TABLE players ( name TEXT,
 CREATE TABLE matches (winner INT
                      REFERENCES players,
                      loser INT
-                     REFERENCES players);
+                     REFERENCES players,
+                     match_id SERIAL,
+                     PRIMARY KEY(match_id));
