@@ -1,43 +1,18 @@
 # FEND-Tournament_Results
-Udacity Nanodegree, Full Stack Project
+Udacity Nanodegree Full Stack Project
 
-To run Vagrant Virtual Machine will need to be insalled.
+## Objective
+Built a PostgreSQL relational database scheme to store the results of a game tournament. Also provided a number of queries to efficiently report the results of the tournament and determine the winner.
 
-The following are key files:
-tournament.sql  - this file is used to set up your database schema (the table representation of your data structure).
-tournament.py - this file is used to provide access to your database via a library of functions which can add, delete or query data in your database to another python program (a client program). Remember that when you define a function, it does not execute, it simply means the function is defined to run a specific set of instructions when called.
-tournament_test.py - this is a client program which will use your functions written in the tournament.py module. 
+## Installation
+To run the Vagrant Virtual Machine will need to be insalled.
 
-In correct directory run the following:
-
-$vagrant ssh
-
-
-$psql
-
----to create a database
-
-
-vagrant=> create database tournament;
-
----connect to database
-
-
-\c tournament
-
-
----to inialise schemas
-
-
-tournament=> \i tournament.sql
-
----to quit psql
-
-
-\q
-
----to run test
-
-
-python tournament_test.py
-
+## Run
+To run use the following command lines in project's directory:
+1. `$ vagrant ssh`
+2. `$ psql`
+3. Create a database `# create database tournament`
+4. Connect to database `# \c tournament`
+5. Inialise schemas `# \i tournament.sql`
+6. Quit psql `# \q`
+7. Run Project `$ python tournament_test.py`
